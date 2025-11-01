@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+@theme {
+  /* Typography */
+  --font-prompt: "Prompt", ui-sans-serif, system-ui, sans-serif;
+
+  /* Colors */
+  --color-highlight-green: #81fe88;
+  --color-pastel-green: #bfffc3;
+  --color-petrol-green: #132e35;
+  --color-graphite: #01080e;
+  --color-dark-gray: #171d1f;
+  --color-gray: #3e3e3f;
+  --color-medium-gray: #b8b8b8;
+  --color-light-gray: #bcbcbc;
+  --color-offwhite: #e1e1e1;
+  --color-white: #ffffff;
+}

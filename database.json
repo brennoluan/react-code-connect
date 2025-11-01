@@ -1,0 +1,196 @@
+{
+  "user": {},
+  "devs": [
+    {
+      "id": "1",
+      "name": "Alex Johnson",
+      "categories": [
+        "FullStack",
+        "Front"
+      ],
+      "email": "alex.johnson@example.com",
+      "description": "Full-stack developer focusing on React, Node.js, and cloud-native apps."
+    },
+    {
+      "id": "2",
+      "name": "Bianca Silva",
+      "categories": [
+        "Mobile"
+      ],
+      "email": "bianca.silva@example.com",
+      "description": "Mobile engineer building performant iOS/Android apps with React Native."
+    },
+    {
+      "id": "3",
+      "name": "Carlos Mendes",
+      "categories": [
+        "Back",
+        "DevOps"
+      ],
+      "email": "carlos.mendes@example.com",
+      "description": "Backend and DevOps specialist, Kubernetes and observability enthusiast."
+    },
+    {
+      "id": "4",
+      "name": "Dana Lee",
+      "categories": [
+        "Data"
+      ],
+      "email": "dana.lee@example.com",
+      "description": "Data engineer with experience in pipelines, warehousing, and analytics."
+    },
+    {
+      "id": "5",
+      "name": "Eduardo Santos",
+      "categories": [
+        "Front"
+      ],
+      "email": "eduardo.santos@example.com",
+      "description": "Frontend specialist with deep expertise in Vue.js, TypeScript and modern CSS."
+    },
+    {
+      "id": "6",
+      "name": "Fernanda Costa",
+      "categories": [
+        "Mobile",
+        "Front"
+      ],
+      "email": "fernanda.costa@example.com",
+      "description": "Cross-platform developer creating beautiful UIs with Flutter and SwiftUI."
+    },
+    {
+      "id": "7",
+      "name": "Gabriel Oliveira",
+      "categories": [
+        "Back"
+      ],
+      "email": "gabriel.oliveira@example.com",
+      "description": "Backend engineer specializing in microservices, Python and Go."
+    },
+    {
+      "id": "8",
+      "name": "Helena Rodrigues",
+      "categories": [
+        "FullStack",
+        "DevOps"
+      ],
+      "email": "helena.rodrigues@example.com",
+      "description": "Full-stack developer with strong DevOps skills, CI/CD and infrastructure as code."
+    },
+    {
+      "id": "9",
+      "name": "Igor Pereira",
+      "categories": [
+        "Data",
+        "Back"
+      ],
+      "email": "igor.pereira@example.com",
+      "description": "Data scientist and backend developer, machine learning and AI enthusiast."
+    },
+    {
+      "id": "10",
+      "name": "Julia Martinez",
+      "categories": [
+        "Front"
+      ],
+      "email": "julia.martinez@example.com",
+      "description": "Frontend developer passionate about accessibility, performance and user experience."
+    },
+    {
+      "id": "11",
+      "name": "Kevin Zhang",
+      "categories": [
+        "Mobile"
+      ],
+      "email": "kevin.zhang@example.com",
+      "description": "iOS developer building native apps with Swift and modern Apple frameworks."
+    },
+    {
+      "id": "12",
+      "name": "Laura Fernandes",
+      "categories": [
+        "DevOps"
+      ],
+      "email": "laura.fernandes@example.com",
+      "description": "DevOps engineer focused on cloud infrastructure, AWS and automation."
+    },
+    {
+      "id": "13",
+      "name": "Marcus Brown",
+      "categories": [
+        "FullStack"
+      ],
+      "email": "marcus.brown@example.com",
+      "description": "Full-stack developer working with Next.js, GraphQL and serverless architectures."
+    },
+    {
+      "id": "14",
+      "name": "Nina Almeida",
+      "categories": [
+        "Data"
+      ],
+      "email": "nina.almeida@example.com",
+      "description": "Data analyst specializing in business intelligence, SQL and data visualization."
+    },
+    {
+      "id": "15",
+      "name": "Oscar Kim",
+      "categories": [
+        "Back",
+        "Data"
+      ],
+      "email": "oscar.kim@example.com",
+      "description": "Backend engineer with expertise in database design, PostgreSQL and Redis."
+    },
+    {
+      "id": "16",
+      "name": "Patricia Lima",
+      "categories": [
+        "Front",
+        "FullStack"
+      ],
+      "email": "patricia.lima@example.com",
+      "description": "Full-stack developer specialized in Angular, RxJS and reactive programming."
+    },
+    {
+      "id": "17",
+      "name": "Rafael Souza",
+      "categories": [
+        "Mobile"
+      ],
+      "email": "rafael.souza@example.com",
+      "description": "Android developer creating high-performance apps with Kotlin and Jetpack Compose."
+    },
+    {
+      "id": "18",
+      "name": "Sofia Nguyen",
+      "categories": [
+        "DevOps",
+        "Back"
+      ],
+      "email": "sofia.nguyen@example.com",
+      "description": "DevOps specialist in container orchestration, Docker and Kubernetes."
+    },
+    {
+      "id": "19",
+      "name": "Thiago Cardoso",
+      "categories": [
+        "FullStack",
+        "Mobile"
+      ],
+      "email": "thiago.cardoso@example.com",
+      "description": "Full-stack developer building web and mobile solutions with React ecosystem."
+    }
+  ],
+  "messages": [
+    {
+      "id": "eba9",
+      "senderName": "teste",
+      "senderEmail": "test@email.com",
+      "recipientDevId": "2",
+      "recipientDevName": "Bianca Silva",
+      "message": "teste tes t",
+      "createdAt": "2025-11-01T17:47:51.645Z"
+    }
+  ]
+}
