@@ -21,7 +21,8 @@ async function fetchWithAuth<T>(
   };
 
   if (accessToken) {
-    headers["Authorization"] = `Bearer ${accessToken}`;
+    (headers as Record<string, string>)["Authorization"] =
+      `Bearer ${accessToken}`;
   }
 
   const response = await fetch(url, { ...options, headers });
