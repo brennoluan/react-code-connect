@@ -7,10 +7,17 @@ import type {
 
 export const authService = {
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    return fetchClient.post<AuthResponse>("/auth/login", credentials);
+    return fetchClient.post<AuthResponse>("/login", credentials);
   },
   register: async (data: RegisterData): Promise<AuthResponse> => {
-    return fetchClient.post<AuthResponse>("/auth/register", data);
+    return fetchClient.post<AuthResponse>("/register", {
+      email: data.email,
+      password: data.password,
+      name: data.name,
+    });
+  },
+  refresh: async (): Promise<AuthResponse> => {
+    return fetchClient.post<AuthResponse>("/auth/refresh");
   },
   logout: async (): Promise<void> => {
     return Promise.resolve();
