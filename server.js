@@ -138,6 +138,8 @@ server.post("/login", async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name || user.email.split("@")[0],
+        description: user.description || null,
+        categories: user.categories || [],
       },
     });
   } catch (error) {
@@ -212,6 +214,8 @@ server.post("/register", async (req, res) => {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+        description: null,
+        categories: [],
       },
     });
   } catch (error) {
@@ -254,6 +258,8 @@ server.post("/auth/refresh", (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name || user.email.split("@")[0],
+        description: user.description || null,
+        categories: user.categories || [],
       },
     });
   } catch (error) {
@@ -358,6 +364,78 @@ server.get("/auth/google/callback", async (req, res) => {
     res.redirect(redirectUrl);
   } catch (error) {
     return res.redirect("http://localhost:5173/login?error=auth_failed");
+  }
+});
+
+// ==================== PROFILE ROUTES ====================
+
+// Rota para atualizar perfil do usuário
+server.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, email, password, description, categories } = req.body;
+
+  try {
+    const bcrypt = require("bcryptjs");
+    const db = router.db;
+
+    // Buscar usuário atual
+    const user = db
+      .get("users")
+      .find({ id: parseInt(id, 10) })
+      .value();
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    // Validar email se foi alterado
+    if (email && email !== user.email) {
+      const existingUser = db.get("users").find({ email }).value();
+      if (existingUser) {
+        return res.status(400).json({ message: "Este email já está em uso" });
+      }
+    }
+
+    // Preparar dados de atualização
+    const updateData = {
+      ...user,
+    };
+
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (description !== undefined) updateData.description = description;
+    if (categories !== undefined) updateData.categories = categories;
+
+    // Atualizar senha se fornecida
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    // Atualizar no banco
+    db.get("users")
+      .find({ id: parseInt(id, 10) })
+      .assign(updateData)
+      .write();
+
+    // Buscar usuário atualizado
+    const updatedUser = db
+      .get("users")
+      .find({ id: parseInt(id, 10) })
+      .value();
+
+    // Retornar usuário atualizado (sem senha)
+    return res.json({
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        description: updatedUser.description || null,
+        categories: updatedUser.categories || [],
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao atualizar perfil" });
   }
 });
 
