@@ -2,6 +2,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  description?: string | null;
+  categories?: string[];
 }
 
 export interface LoginCredentials {
