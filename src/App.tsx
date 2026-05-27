@@ -11,6 +11,9 @@ import { useTokenRefresh } from "./features/auth/hooks/useTokenRefresh";
 import { RegisterPage } from "./pages/RegisterPage";
 import { useAuth } from "./features/auth/hooks/useAuth";
 import { LoadingComponent } from "./features/auth/components/LoadingComponent";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const AppContent = () => {
   const { isLoading } = useAuth();
@@ -31,6 +34,7 @@ const AppContent = () => {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
@@ -46,6 +50,7 @@ const AppContent = () => {
 function App() {
   return (
     <AuthProvider>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
       <AppContent />
     </AuthProvider>
   );
