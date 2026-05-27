@@ -5,6 +5,7 @@ import { authService } from "../services/authService";
 
 const USER_STORAGE_KEY = "@CodeConnect:user";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext<AuthContextType | undefined>(
   undefined,
 );
@@ -21,7 +22,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isHydrated) return;
-
     if (user) {
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
     }
@@ -42,14 +42,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(response.user);
         setAccessToken(response.accessToken);
       } catch (error) {
-        console.error("Failed to hydrate auth:", error);
+        console.error("Erro ao carregar autenticação:", error);
         localStorage.removeItem(USER_STORAGE_KEY);
       } finally {
         setIsLoading(false);
         setIsHydrated(true);
       }
     };
-
     hydrateAuth();
   }, []);
 
