@@ -9,9 +9,17 @@ import { AuthProvider } from "./features/auth/contexts/AuthContext";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { useTokenRefresh } from "./features/auth/hooks/useTokenRefresh";
 import { RegisterPage } from "./pages/RegisterPage";
+import { useAuth } from "./features/auth/hooks/useAuth";
+import { LoadingComponent } from "./features/auth/components/LoadingComponent";
 
 const AppContent = () => {
+  const { isLoading } = useAuth();
+
   useTokenRefresh();
+
+  if (isLoading) {
+    return <LoadingComponent />;
+  }
 
   return (
     <DevsProvider>
