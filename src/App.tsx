@@ -8,6 +8,7 @@ import { ContactPage } from "./pages/ContactPage";
 import { AuthProvider } from "./features/auth/contexts/AuthContext";
 import { ProtectedRoute } from "./features/auth/components/ProtectedRoute";
 import { useTokenRefresh } from "./features/auth/hooks/useTokenRefresh";
+import { RegisterPage } from "./pages/RegisterPage";
 
 const AppContent = () => {
   useTokenRefresh();
@@ -21,6 +22,7 @@ const AppContent = () => {
         <main className="md:ml-64 pb-16 md:pb-0">
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
