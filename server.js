@@ -1,10 +1,15 @@
 import { createRequire } from "module";
+
+import dotenv from "dotenv";
+dotenv.config();
+
 const require = createRequire(import.meta.url);
 
 const jsonServer = require("json-server");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const { google } = require("googleapis");
 
 const server = jsonServer.create();
 const router = jsonServer.router("database.json");
@@ -14,12 +19,25 @@ const defaults = jsonServer.defaults();
 const ACCESS_TOKEN_SECRET = "seu-access-token-secret-super-secreto";
 const REFRESH_TOKEN_SECRET = "seu-refresh-token-secret-ainda-mais-secreto";
 
+// Configuração do Google OAuth
+const GOOGLE_CLIENT_ID =
+  process.env.GOOGLE_CLIENT_ID || "your-google-client-id";
+const GOOGLE_CLIENT_SECRET =
+  process.env.GOOGLE_CLIENT_SECRET || "your-google-client-secret";
+const GOOGLE_REDIRECT_URI = "http://localhost:3001/auth/google/callback";
+
+const oauth2Client = new google.auth.OAuth2(
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
+);
+
 // Note: Permissões gerenciadas manualmente nas rotas customizadas
 
 // CORS deve vir PRIMEIRO, antes de qualquer outro middleware
 server.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://localhost:5174"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
@@ -29,7 +47,13 @@ server.use(
 
 // Adicionar headers CORS manualmente para garantir
 server.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:5173");
+  const origin = req.headers.origin;
+  if (
+    origin === "http://localhost:5173" ||
+    origin === "http://localhost:5174"
+  ) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header(
     "Access-Control-Allow-Methods",
@@ -52,7 +76,6 @@ server.use(jsonServer.bodyParser);
 
 // Rota customizada de login - SUBSTITUI a padrão do json-server-auth
 server.post("/login", async (req, res) => {
-  console.log("🔐 Custom login route hit");
   const { email, password } = req.body;
 
   if (!email || !password) {
@@ -67,19 +90,23 @@ server.post("/login", async (req, res) => {
     const user = db.get("users").find({ email }).value();
 
     if (!user) {
-      console.log("❌ User not found:", email);
       return res.status(400).json({ message: "Email ou senha incorretos" });
+    }
+
+    // Verificar se é usuário OAuth (sem senha)
+    if (!user.password) {
+      return res.status(400).json({
+        message:
+          'Esta conta usa login social. Use o botão "Entrar com Google".',
+      });
     }
 
     // Verificar senha
     const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
-      console.log("❌ Invalid password");
       return res.status(400).json({ message: "Email ou senha incorretos" });
     }
-
-    console.log("✅ Login successful for:", email);
 
     // Gerar tokens
     const accessToken = jwt.sign(
@@ -104,8 +131,6 @@ server.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    console.log("🍪 Refresh token cookie set");
-
     // Retornar resposta
     return res.json({
       accessToken,
@@ -113,17 +138,17 @@ server.post("/login", async (req, res) => {
         id: user.id,
         email: user.email,
         name: user.name || user.email.split("@")[0],
+        description: user.description || null,
+        categories: user.categories || [],
       },
     });
   } catch (error) {
-    console.log("❌ Login error:", error.message);
     return res.status(500).json({ message: "Erro ao fazer login" });
   }
 });
 
 // Rota customizada de registro
 server.post("/register", async (req, res) => {
-  console.log("📝 Custom register route hit");
   const { email, password, name } = req.body;
 
   if (!email || !password || !name) {
@@ -140,7 +165,6 @@ server.post("/register", async (req, res) => {
     const existingUser = db.get("users").find({ email }).value();
 
     if (existingUser) {
-      console.log("❌ User already exists:", email);
       return res
         .status(400)
         .json({ message: "Usuário já cadastrado com este email" });
@@ -159,8 +183,6 @@ server.post("/register", async (req, res) => {
 
     // Salvar no banco
     db.get("users").push(newUser).write();
-
-    console.log("✅ User registered successfully:", email);
 
     // Gerar tokens (auto-login após registro)
     const accessToken = jwt.sign(
@@ -185,8 +207,6 @@ server.post("/register", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    console.log("🍪 Refresh token cookie set for new user");
-
     // Retornar resposta
     return res.json({
       accessToken,
@@ -194,36 +214,32 @@ server.post("/register", async (req, res) => {
         id: newUser.id,
         email: newUser.email,
         name: newUser.name,
+        description: null,
+        categories: [],
       },
     });
   } catch (error) {
-    console.log("❌ Register error:", error.message);
     return res.status(500).json({ message: "Erro ao criar conta" });
   }
 });
 
 // Rota de refresh ANTES do auth.rewriter
 server.post("/auth/refresh", (req, res) => {
-  console.log("🔄 Refresh token request received");
   const refreshToken = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    console.log("❌ Refresh token not found in cookies");
     return res.status(401).json({ message: "Refresh token não encontrado" });
   }
 
   try {
     const decoded = jwt.verify(refreshToken, REFRESH_TOKEN_SECRET);
-    console.log("✅ Refresh token válido:", decoded);
 
     const db = router.db;
-    // JWT serializa userId como string; no JSON o id pode ser number.
-    // Usamos `value()` + `Array.find` para evitar pegadinhas do wrapper do lowdb/lodash.
-    const users = db.get("users").value() ?? [];
-    const user = users.find((u) => String(u.id) === String(decoded.userId));
+    // Converter userId de string para número
+    const userId = parseInt(decoded.userId, 10);
+    const user = db.get("users").find({ id: userId }).value();
 
     if (!user) {
-      console.log("❌ User not found:", decoded.userId);
       return res.status(401).json({ message: "Usuário não encontrado" });
     }
 
@@ -236,21 +252,190 @@ server.post("/auth/refresh", (req, res) => {
       { expiresIn: "15m" },
     );
 
-    console.log("✅ New access token generated for user:", user.email);
-
     return res.json({
       accessToken: newAccessToken,
       user: {
         id: user.id,
         email: user.email,
         name: user.name || user.email.split("@")[0],
+        description: user.description || null,
+        categories: user.categories || [],
       },
     });
   } catch (error) {
-    console.log("❌ Refresh token error:", error.message);
     return res
       .status(401)
       .json({ message: "Refresh token inválido ou expirado" });
+  }
+});
+
+// ==================== GOOGLE OAUTH ROUTES ====================
+
+// Rota para iniciar o fluxo OAuth com Google
+server.get("/auth/google", (req, res) => {
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: [
+      "https://www.googleapis.com/auth/userinfo.profile",
+      "https://www.googleapis.com/auth/userinfo.email",
+    ],
+    prompt: "consent",
+  });
+
+  res.redirect(authUrl);
+});
+
+// Rota de callback do Google OAuth
+server.get("/auth/google/callback", async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.redirect("http://localhost:5173/login?error=no_code");
+  }
+
+  try {
+    // Trocar código por tokens
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    // Buscar informações do usuário
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    const { data } = await oauth2.userinfo.get();
+
+    const db = router.db;
+
+    // Buscar ou criar usuário
+    let user = db.get("users").find({ googleId: data.id }).value();
+
+    if (!user) {
+      // Verificar se já existe usuário com o mesmo email
+      user = db.get("users").find({ email: data.email }).value();
+
+      if (user) {
+        // Atualizar usuário existente com googleId
+        db.get("users")
+          .find({ email: data.email })
+          .assign({
+            googleId: data.id,
+          })
+          .write();
+
+        user = db.get("users").find({ email: data.email }).value();
+      } else {
+        // Criar novo usuário
+        const newUser = {
+          id: db.get("users").size().value() + 1,
+          email: data.email,
+          name: data.name,
+          googleId: data.id,
+          password: null, // OAuth users não tem senha
+        };
+
+        db.get("users").push(newUser).write();
+        user = newUser;
+      }
+    }
+
+    // Gerar tokens JWT
+    const accessToken = jwt.sign(
+      { sub: user.id.toString(), email: user.email },
+      ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" },
+    );
+
+    const refreshToken = jwt.sign(
+      { userId: user.id.toString() },
+      REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    // Definir cookie
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirecionar para o frontend com o access token
+    const redirectUrl = `http://localhost:5173/auth/callback?token=${accessToken}`;
+    res.redirect(redirectUrl);
+  } catch (error) {
+    return res.redirect("http://localhost:5173/login?error=auth_failed");
+  }
+});
+
+// ==================== PROFILE ROUTES ====================
+
+// Rota para atualizar perfil do usuário
+server.put("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, email, password, description, categories } = req.body;
+
+  try {
+    const bcrypt = require("bcryptjs");
+    const db = router.db;
+
+    // Buscar usuário atual
+    const user = db
+      .get("users")
+      .find({ id: parseInt(id, 10) })
+      .value();
+
+    if (!user) {
+      return res.status(404).json({ message: "Usuário não encontrado" });
+    }
+
+    // Validar email se foi alterado
+    if (email && email !== user.email) {
+      const existingUser = db.get("users").find({ email }).value();
+      if (existingUser) {
+        return res.status(400).json({ message: "Este email já está em uso" });
+      }
+    }
+
+    // Preparar dados de atualização
+    const updateData = {
+      ...user,
+    };
+
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (description !== undefined) updateData.description = description;
+    if (categories !== undefined) updateData.categories = categories;
+
+    // Atualizar senha se fornecida
+    if (password && password.trim() !== "") {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateData.password = hashedPassword;
+    }
+
+    // Atualizar no banco
+    db.get("users")
+      .find({ id: parseInt(id, 10) })
+      .assign(updateData)
+      .write();
+
+    // Buscar usuário atualizado
+    const updatedUser = db
+      .get("users")
+      .find({ id: parseInt(id, 10) })
+      .value();
+
+    // Retornar usuário atualizado (sem senha)
+    return res.json({
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        name: updatedUser.name,
+        description: updatedUser.description || null,
+        categories: updatedUser.categories || [],
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao atualizar perfil" });
   }
 });
 
@@ -263,7 +448,5 @@ server.use(router);
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`\n🚀 JSON Server with auth running at http://localhost:${PORT}`);
-  console.log(`📡 CORS enabled for: http://localhost:5173`);
-  console.log(`🍪 Cookies enabled with credentials\n`);
+  console.log(`JSON Server running at http://localhost:${PORT}`);
 });
